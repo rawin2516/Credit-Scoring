@@ -1,2 +1,3 @@
-# Machine_Learning
-All self learning codes developed and in development
+# Credit Rating and Scoring System (CRASS)
+
+Machine learning code for automatic credit assessment of customer.
