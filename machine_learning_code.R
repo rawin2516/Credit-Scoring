@@ -254,9 +254,7 @@ cutoff_determination <- function(x) {
   
   names(imp_list) <- c("gbm", "rf", "glm", "nn", "c5") # initialising the names for the list of variable importances of each model
   
-  n_cutoff = 0 #n_cutoff is used to recursively incerase the cutoff of the variable importance score (after starting with 0 i.e. all variables are included)
-  
-  m_cutoff = 0 #m_cutoff is used to recursively increase the curoff of the probability of default which gives the best results
+  n_cutoff = 0 #n_cutoff is used to recursively increase the cutoff of the variable importance score (after starting with 0 i.e. all variables are included)
   
   conf <- vector("list", length(imp_list)) #confusion matrix list for each iteration
   
