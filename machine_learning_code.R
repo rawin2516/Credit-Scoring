@@ -374,7 +374,7 @@ while (n_cutoff < 100) {
 
 # Subsetting the models based on the performance metrics 
   
-if ( max(result_cutoff_vector_area_roc) >= 0.6 &
+if ( max(result_cutoff_vector_area_roc) >= 0.7 &
      max(result_cutoff_vector_bad) >= 0.7 &
      max(result_cutoff_vector_total) >= 0.65) {
   result_cutoff_vector_total_subset <-
@@ -384,7 +384,7 @@ if ( max(result_cutoff_vector_area_roc) >= 0.6 &
     result_cutoff_vector_bad[result_cutoff_vector_bad > 0.7]
   
   result_cutoff_vector_area_roc_subset <-
-    result_cutoff_vector_area_roc[result_cutoff_vector_area_roc > 0.42]
+    result_cutoff_vector_area_roc[result_cutoff_vector_area_roc > 0.7]
   
   name_final_models <- Reduce(intersect,
                               list(
