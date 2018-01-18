@@ -1,5 +1,21 @@
+
+####################################
+# CRASS MACHINE LEARNING ALGORITHM #
+####################################
+
+
+#######################
+# Author: Awin Salian #
+#######################
+
+
+#Last Updated: 2018/01/11#
+
+
+
 #Set Random Seed
 set.seed(2)
+
 
 #############################################################################################################
 #                                                                                                           #
@@ -279,9 +295,9 @@ cutoff_determination <- function(x) {
 #######################Choosing the best model##########################
 
 
-# Loop over both the variable importance score cutoff and the probabiltiy of default curoff
+# Loop over both the variable importance score cutoff and the probability of default cutoff
   
-while (n_cutoff < 100 & m_cutoff <= 0.4) {
+while (n_cutoff < 100) {
   for (i in 1:length(imp_list)) {
     var_names <-
       rownames(subset(
@@ -321,6 +337,9 @@ while (n_cutoff < 100 & m_cutoff <= 0.4) {
   m = 0
   n = 0
   
+  
+  #The next step allows us to see the maximum possible performance each model provides
+  
   for (j in 1:length(result_cutoff)) {
     while (nrow(n_fin_df[[j]]) == 0 || is.null(nrow(n_fin_df[[j]]))) {
       n_fin_df[[j]] <-
@@ -332,38 +351,30 @@ while (n_cutoff < 100 & m_cutoff <= 0.4) {
       
       n <- n + 0.01
       
-    } 
+    } #checking at each iteration if the performance metrics exceed a certain value and storing the first populated value
     
     
     for (j in 1:length(result_cutoff_vector_total)) {
       result_cutoff_vector_total[j] <- max(n_fin_df[[j]][, 2])
       
-    }
+    } #Accuracy of the confusion matrix of each model for each cutoff
     
     for (j in 1:length(result_cutoff_vector_bad)) {
       result_cutoff_vector_bad[j] <- max(n_fin_df[[j]][, 3])
       
-    }
+    } #Accuracy of prediciton of delinquencies of each model for each cutoff
     
     for (j in 1:length(result_cutoff_vector_bad)) {
       result_cutoff_vector_area_roc[j] <- max(n_fin_df[[j]][, 4])
       
-    }
+    } # AUC - ROC of each model for each cutoff
     
   }
   
-  if (max(result_cutoff_vector_area_roc) > 0.64 - m_cutoff &
-      max(result_cutoff_vector_bad) > 0.8 - m_cutoff &
-      max(result_cutoff_vector_total) > 0.8 - m_cutoff) {
-    break
-    
-  }
-  
-  m_cutoff =  m_cutoff + 0.01
   
 }
 
-# Subsetting the models based on the performance metrics
+# Subsetting the models based on the performance metrics 
   
 if ( max(result_cutoff_vector_area_roc) >= 0.6 &
      max(result_cutoff_vector_bad) >= 0.7 &
@@ -386,7 +397,7 @@ if ( max(result_cutoff_vector_area_roc) >= 0.6 &
   
 }
 
-model_names_re_train <- which(model_names %in% name_final_models)
+model_names_re_train <- which(model_names %in% name_final_models) #finalising and storing the chosen ones
 
 
 
@@ -446,7 +457,7 @@ if (n > 1) {
   
   average_final_ensemble <- sum/n
 
-  #ACCURACY OF ENSEMBLE MODELS
+  ####################ACCURACY OF ENSEMBLE MODELS#######################################3
   
   model_list_ensemble <-
     list(a = average_final_ensemble)
@@ -458,8 +469,6 @@ if (n > 1) {
     result_cutoff_ensemble[[i]] <- cutoff_determination_2(i)
     
   }
-  
-  
   
   n_fin_df_ensemble <-  vector("list", length(model_list_ensemble))
   
