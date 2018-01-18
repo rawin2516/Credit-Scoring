@@ -422,8 +422,8 @@ model_names_re_train <- which(model_names %in% name_final_models) #finalising an
     j=j+1
     
     n_fin_df_subs[[i]] <-
-      subset(n_fin_df[[i]], n_fin_df[[i]]$area_roc > 0.42 &
-               n_fin_df[[i]]$accuracy > 0.6, n_fin_df[[i]]$bad_acc > 0.7)
+      subset(n_fin_df[[i]], n_fin_df[[i]]$area_roc > 0.7 &
+               n_fin_df[[i]]$accuracy > 0.65, n_fin_df[[i]]$bad_acc > 0.7)
     
     n_fin_df_subs[[i]] <-
       n_fin_df_subs[[i]][order(n_fin_df_subs[[i]]$area_roc), ]
@@ -486,7 +486,8 @@ if (n > 1) {
         subset(
           result_cutoff_ensemble[[j]],
           result_cutoff_ensemble[[j]]$accuracy >= 0.8 - n &
-            result_cutoff_ensemble[[j]]$bad_acc >= 0.8 - n
+            result_cutoff_ensemble[[j]]$bad_acc >= 0.8 - n &
+            result_cutoff_ensemble[[j]]$area_roc >= 0.7 - n
         )
       
       n <- n + 0.01
@@ -532,7 +533,7 @@ if (n > 1) {
   
   for (i in 1:length(model_list_ensemble)) {
     n_fin_df_subs_ensemble[[i]] <-
-      subset(n_fin_df_ensemble[[i]], n_fin_df_ensemble[[i]]$area_roc > 0.42)
+      subset(n_fin_df_ensemble[[i]], n_fin_df_ensemble[[i]]$area_roc > 0.7)
     
     n_fin_df_subs_ensemble[[i]] <-
       n_fin_df_subs_ensemble[[i]][order(n_fin_df_subs_ensemble[[i]]$area_roc), ]
@@ -573,7 +574,7 @@ if (flag_for_ensemble_check == "N") {
   
   final_model_output <- train(as.formula(paste("Verdict ~", paste(imp_list_names[[n]], collapse="+"))), data = cs,
                                     trControl = myControl, 
-                                    method = method_list[n], preProcess = c("zv", "nzv",  "scale", "center", "YeoJohnson"))
+                                    method = method_list[n])
   
   pred_final_model_output <- predict(final_model_output, newdata = test_new_request, type = 'prob')
   
