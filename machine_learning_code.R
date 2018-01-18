@@ -155,7 +155,7 @@ myControl <- trainControl(
     }
 
 
-################################Cutoff Determination###############################
+################################Cutoff Determination for individual models###############################
 
 cutoff_determination <- function(x) {
 
@@ -188,8 +188,6 @@ cutoff_determination <- function(x) {
   }
   
   min_cutoff <- cutoff
-  
-  x=1
   
   while (cutoff < 1) {
     for (j in 1:(no_iter)) {
@@ -238,7 +236,87 @@ cutoff_determination <- function(x) {
   
 }
 
-
+  
+################################Cutoff Determination for ensemble models###############################
+  
+  cutoff_determination_2 <- function(x){
+    
+    cutoff <- 0.1 #initialising a value for  cutoff
+    
+    no_it  <- 100 
+    
+    cutoff <- as.numeric(cutoff)
+    
+    no_it <- as.numeric(no_it)
+    
+    in_cutoff <- cutoff
+    
+    min_it_size <- 1 / no_it #step size
+    
+    no_iter <- (1 - cutoff) * (1 / min_it_size) #number of steps
+    
+    class_pred_test <- vector("numeric", length = nrow(test_cs)) #initializing a vector for storing predicted values
+    
+    index_test <- 1:no_iter
+    
+    cutoff_vector <- vector("numeric", length = no_iter)
+    
+    cutoff_vector[1] <- in_cutoff
+    
+    
+    for (i in 1:(no_iter - 1)){
+      cutoff_vector[i + 1] <- cutoff_vector[i] + min_it_size
+      
+    }
+    
+    min_cutoff <- cutoff
+    
+    while (cutoff < 1) {
+      for (j in 1:(no_iter)) {
+        for (i in 1:nrow(test_cs)) {
+          if (model_list_ensemble[[x]]$`1`[i] > cutoff) {
+            class_pred_test[i] = 1
+            
+          } else{
+            class_pred_test[i] = 0
+            
+          }
+          
+        }
+        
+        conf[[x]][[j]] <-
+          confusionMatrix(class_pred_test, test_cs$Verdict) #confusion matrix at each iteration
+        
+        accuracy[[x]][j] <-
+          (conf[[x]][[j]]$table[1, 1] + conf[[x]][[j]]$table[2, 2]) /
+          (conf[[x]][[j]]$table[1, 1] + conf[[x]][[j]]$table[1, 2] +
+             conf[[x]][[j]]$table[2, 1] + conf[[x]][[j]]$table[2, 2]) #overall accuracy
+        
+        bad_acc[[x]][j]  <-
+          (conf[[x]][[j]]$table[2, 2]) / (conf[[x]][[j]]$table[1, 2] + conf[[x]][[j]]$table[2, 2]) #Accuracy of predicting defauls
+        
+        area_roc[[x]][j] <- as.numeric(roc(test_cs$Verdict, class_pred_test)$auc) # AUC ROC values
+        
+        cutoff = cutoff + min_it_size
+        
+      }
+      
+      accuracy_df_ensemble[[x]] <-
+        data.frame(
+          cbind(
+            cutoff_vector,
+            "accuracy" = accuracy[[x]],
+            "bad_acc" = bad_acc[[x]],
+            "area_roc" = area_roc[[x]],
+            index_test
+          )
+        ) #creating a data-frame with the three metrics as our columns
+      
+      return(accuracy_df_ensemble[[x]])
+      
+    }  
+    
+  }
 ###########################################Variable Importance###########################################
 
 
@@ -264,9 +342,9 @@ cutoff_determination <- function(x) {
   
   area_roc <- vector("list", length(imp_list)) # AUC - ROC values of each model at each iteration
   
-  accuracy_df <- vector("list", length(imp_list))
+  accuracy_df <- vector("list", length(imp_list)) # Accuracy data frame to store the values for the accuracy metrics at each cutoff
   
-  n_fin_df <-  vector("list", length(imp_list))
+  n_fin_df <-  vector("list", length(imp_list)) # Subsets of accuracy_df based on the accuracy criteria
   
   result_cutoff_vector_total <- vector("numeric", length(imp_list))
   
@@ -374,7 +452,7 @@ while (n_cutoff < 100) {
 
 # Subsetting the models based on the performance metrics 
   
-if ( max(result_cutoff_vector_area_roc) >= 0.7 &
+if ( max(result_cutoff_vector_area_roc) >= 0.6 &
      max(result_cutoff_vector_bad) >= 0.7 &
      max(result_cutoff_vector_total) >= 0.65) {
   result_cutoff_vector_total_subset <-
@@ -384,7 +462,7 @@ if ( max(result_cutoff_vector_area_roc) >= 0.7 &
     result_cutoff_vector_bad[result_cutoff_vector_bad > 0.7]
   
   result_cutoff_vector_area_roc_subset <-
-    result_cutoff_vector_area_roc[result_cutoff_vector_area_roc > 0.7]
+    result_cutoff_vector_area_roc[result_cutoff_vector_area_roc > 0.6]
   
   name_final_models <- Reduce(intersect,
                               list(
@@ -422,8 +500,8 @@ model_names_re_train <- which(model_names %in% name_final_models) #finalising an
     j=j+1
     
     n_fin_df_subs[[i]] <-
-      subset(n_fin_df[[i]], n_fin_df[[i]]$area_roc > 0.7 &
-               n_fin_df[[i]]$accuracy > 0.65, n_fin_df[[i]]$bad_acc > 0.7)
+      subset(n_fin_df[[i]], n_fin_df[[i]]$area_roc > 0.42 &
+               n_fin_df[[i]]$accuracy > 0.6, n_fin_df[[i]]$bad_acc > 0.7)
     
     n_fin_df_subs[[i]] <-
       n_fin_df_subs[[i]][order(n_fin_df_subs[[i]]$area_roc), ]
@@ -457,6 +535,8 @@ if (n > 1) {
 
   ####################ACCURACY OF ENSEMBLE MODELS#######################################3
   
+  accuracy_df_ensemble <- vector("list", length(imp_list)) # Accuracy data frame to store the values for the accuracy metrics at each cutoff
+  
   model_list_ensemble <-
     list(a = average_final_ensemble)
   
@@ -486,8 +566,7 @@ if (n > 1) {
         subset(
           result_cutoff_ensemble[[j]],
           result_cutoff_ensemble[[j]]$accuracy >= 0.8 - n &
-            result_cutoff_ensemble[[j]]$bad_acc >= 0.8 - n &
-            result_cutoff_ensemble[[j]]$area_roc >= 0.7 - n
+            result_cutoff_ensemble[[j]]$bad_acc >= 0.8 - n
         )
       
       n <- n + 0.01
@@ -533,7 +612,7 @@ if (n > 1) {
   
   for (i in 1:length(model_list_ensemble)) {
     n_fin_df_subs_ensemble[[i]] <-
-      subset(n_fin_df_ensemble[[i]], n_fin_df_ensemble[[i]]$area_roc > 0.7)
+      subset(n_fin_df_ensemble[[i]], n_fin_df_ensemble[[i]]$area_roc > 0.42)
     
     n_fin_df_subs_ensemble[[i]] <-
       n_fin_df_subs_ensemble[[i]][order(n_fin_df_subs_ensemble[[i]]$area_roc), ]
@@ -574,7 +653,7 @@ if (flag_for_ensemble_check == "N") {
   
   final_model_output <- train(as.formula(paste("Verdict ~", paste(imp_list_names[[n]], collapse="+"))), data = cs,
                                     trControl = myControl, 
-                                    method = method_list[n])
+                                    method = method_list[n], preProcess = c("zv", "nzv",  "scale", "center", "YeoJohnson"))
   
   pred_final_model_output <- predict(final_model_output, newdata = test_new_request, type = 'prob')
   
