@@ -454,7 +454,7 @@ while (n_cutoff < 100) {
   
 if ( max(result_cutoff_vector_area_roc) >= 0.6 &
      max(result_cutoff_vector_bad) >= 0.7 &
-     max(result_cutoff_vector_total) >= 0.65) {
+     max(result_cutoff_vector_total) >= 0.6) {
   result_cutoff_vector_total_subset <-
     result_cutoff_vector_total[result_cutoff_vector_total > 0.6]
   
@@ -471,7 +471,9 @@ if ( max(result_cutoff_vector_area_roc) >= 0.6 &
                                 names(result_cutoff_vector_total_subset)
                               ))
   
-}
+} 
+
+#Put in an else condition for if the above cutoffs fail 
 
 model_names_re_train <- which(model_names %in% name_final_models) #finalising and storing the chosen ones
 
@@ -500,7 +502,7 @@ model_names_re_train <- which(model_names %in% name_final_models) #finalising an
     j=j+1
     
     n_fin_df_subs[[i]] <-
-      subset(n_fin_df[[i]], n_fin_df[[i]]$area_roc > 0.42 &
+      subset(n_fin_df[[i]], n_fin_df[[i]]$area_roc > 0.6 &
                n_fin_df[[i]]$accuracy > 0.6, n_fin_df[[i]]$bad_acc > 0.7)
     
     n_fin_df_subs[[i]] <-
@@ -653,7 +655,7 @@ if (flag_for_ensemble_check == "N") {
   
   final_model_output <- train(as.formula(paste("Verdict ~", paste(imp_list_names[[n]], collapse="+"))), data = cs,
                                     trControl = myControl, 
-                                    method = method_list[n], preProcess = c("zv", "nzv",  "scale", "center", "YeoJohnson"))
+                                    method = method_list[n])
   
   pred_final_model_output <- predict(final_model_output, newdata = test_new_request, type = 'prob')
   
