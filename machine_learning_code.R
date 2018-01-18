@@ -675,7 +675,7 @@ if (flag_for_ensemble_check == "N") {
     
   }
   
-  
+#The average of pred_final_model_output will be the final output  
 }
 
 
